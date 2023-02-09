@@ -27,6 +27,7 @@
 #include "rom/ets_sys.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_log.h"
 
 #include "dht11.h"
 
@@ -126,8 +127,8 @@ struct dht11_reading DHT11_read() {
 }
 
 void dht11_init() {
-	DHT11_init(GPIO_DHT11);
-  xTaskCreate(&handle_dht11, "Sensor DHT11", 4096, NULL, 1, NULL);
+    DHT11_init(GPIO_DHT11);
+    xTaskCreate(&handle_dht11, "Sensor DHT11", 4096, NULL, 1, NULL);
 }
 
 void handle_dht11(void* params) {
@@ -136,6 +137,8 @@ void handle_dht11(void* params) {
 		int humidity = DHT11_read().humidity;
 		int status = DHT11_read().status;
 
+        ESP_LOGI("Sensor DHT11", "Temperatura: %d - Umidade: %d", temperature, humidity);
+        
 		if (status == DHT11_OK) {
 			ESP_LOGI("Sensor DHT11", "Temperatura: %d - Umidade: %d", temperature, humidity);
 		}

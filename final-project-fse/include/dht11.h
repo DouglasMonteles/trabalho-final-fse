@@ -27,7 +27,7 @@
 
 #include "driver/gpio.h"
 
-#define GPIO_DHT11 14
+#define GPIO_DHT11 15
 
 enum dht11_status {
   DHT11_CRC_ERROR = -2,
