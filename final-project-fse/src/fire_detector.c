@@ -2,8 +2,10 @@
 #include "freertos/task.h"
 #include "driver/adc.h"
 #include "esp_log.h"
+#include "cJSON.h"
 
 #include "fire_detector.h"
+#include "mqtt.h"
 
 int analogic_output;
 int digital_output;
@@ -11,6 +13,8 @@ int digital_output;
 void init_fire_detector() {
   config_fire_detector();
   xTaskCreate(&handle_fire_detector, "Detector de chama", 4096, NULL, 1, NULL);
+  mqtt_send_message_to_dashboard_about_flame_detector(0);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 
 void config_fire_detector() {
@@ -35,9 +39,25 @@ void handle_fire_detector(void* params) {
 
     if (digital_output != 0){
       ESP_LOGI("Modulo detector de fogo", "Fogo detectado!!!");
+      mqtt_send_message_to_dashboard_about_flame_detector(digital_output);
+
       vTaskDelay(2000 / portTICK_PERIOD_MS);
+    } else {
+      mqtt_send_message_to_dashboard_about_flame_detector(digital_output);
     }
     
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
+}
+
+void mqtt_send_message_to_dashboard_about_flame_detector(int is_activated) {
+  cJSON* response_body = cJSON_CreateObject();
+  
+  if (response_body == NULL){
+    ESP_LOGE("Fire detector", "Nao foi possivel criar o response_body do detector de fogo!");
+  }
+
+  cJSON_AddItemToObject(response_body, "fire_detector_state", cJSON_CreateNumber(is_activated));
+  mqtt_envia_mensagem("v1/devices/me/attributes", cJSON_Print(response_body));
+  vTaskDelay(3000 / portTICK_PERIOD_MS);
 }
