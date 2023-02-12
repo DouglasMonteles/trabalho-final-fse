@@ -10,6 +10,7 @@
 #include "wifi.h"
 #include "mqtt.h"
 #include "fire_detector.h"
+#include "temperature_sensor.h"
 
 SemaphoreHandle_t conexaoWifiSemaphore;
 SemaphoreHandle_t conexaoMQTTSemaphore;
@@ -32,6 +33,15 @@ void handle_fire_detector_server_connection(void * params) {
   }
 }
 
+void handle_temperature_sensor_server_connection(void * params) {
+  ESP_LOGI("SENSOR DE TEMPERATURA", "Iniciado...");
+    while(true) {
+      //init_temperature_sensor();
+      vTaskDelay(3000 / portTICK_PERIOD_MS);
+    }
+  
+}
+
 void app_main(void) {
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
@@ -46,5 +56,6 @@ void app_main(void) {
   wifi_start();
 
   xTaskCreate(&conectadoWifi,  "Conexão ao MQTT", 4096, NULL, 1, NULL);
-  xTaskCreate(&handle_fire_detector_server_connection, "Comunicação com Broker", 4096, NULL, 1, NULL);
+  xTaskCreate(&handle_fire_detector_server_connection, "Comunicação com Broker - Fire Detector", 4096, NULL, 1, NULL);
+  //xTaskCreate(&handle_temperature_sensor_server_connection, "Comunicação com Broker - Fire Detector", 4096, NULL, 1, NULL);
 }

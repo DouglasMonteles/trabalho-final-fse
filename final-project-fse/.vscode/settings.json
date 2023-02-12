@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "temperature_sensor.h": "c",
+    "stdbool.h": "c",
+    "gpio.h": "c",
+    "fire_detector.h": "c"
+  }
+}

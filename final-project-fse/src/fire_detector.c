@@ -12,7 +12,7 @@ int digital_output;
 
 void init_fire_detector() {
   config_fire_detector();
-  xTaskCreate(&handle_fire_detector, "Detector de chama", 4096, NULL, 1, NULL);
+  xTaskCreate(&handle_fire_detector, "Detector de chama", 2048, NULL, 1, NULL);
   mqtt_send_message_to_dashboard_about_flame_detector(0);
   vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
@@ -37,12 +37,13 @@ void handle_fire_detector(void* params) {
 
     ESP_LOGI("DETECTOR DE FOGO", "Saida analogica: %d - Saida digital: %d", analogic_output, digital_output);
 
-    if (digital_output != 0){
+    if (digital_output != 0) {
       ESP_LOGI("Modulo detector de fogo", "Fogo detectado!!!");
       mqtt_send_message_to_dashboard_about_flame_detector(digital_output);
 
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     } else {
+      analogic_output = 0;
       mqtt_send_message_to_dashboard_about_flame_detector(digital_output);
     }
     
@@ -51,13 +52,22 @@ void handle_fire_detector(void* params) {
 }
 
 void mqtt_send_message_to_dashboard_about_flame_detector(int is_activated) {
-  cJSON* response_body = cJSON_CreateObject();
+  cJSON* attributes_response_body = cJSON_CreateObject();
+  cJSON* telemetry_response_body = cJSON_CreateObject();
   
-  if (response_body == NULL){
-    ESP_LOGE("Fire detector", "Nao foi possivel criar o response_body do detector de fogo!");
+  if (attributes_response_body == NULL) {
+    ESP_LOGE("Fire detector", "Nao foi possivel criar o attributes_response_body do detector de fogo!");
   }
 
-  cJSON_AddItemToObject(response_body, "fire_detector_state", cJSON_CreateNumber(is_activated));
-  mqtt_envia_mensagem("v1/devices/me/attributes", cJSON_Print(response_body));
+  if (telemetry_response_body == NULL) {
+    ESP_LOGE("Fire detector", "Nao foi possivel criar o telemetry_response_body do detector de fogo!");
+  }
+
+  cJSON_AddItemToObject(telemetry_response_body, "fire_detector_state_telemetry", cJSON_CreateNumber(analogic_output));
+  mqtt_envia_mensagem("v1/devices/me/telemetry", cJSON_Print(telemetry_response_body));
+
+  cJSON_AddItemToObject(attributes_response_body, "fire_detector_state", cJSON_CreateNumber(is_activated));
+  mqtt_envia_mensagem("v1/devices/me/attributes", cJSON_Print(attributes_response_body));
+  
   vTaskDelay(3000 / portTICK_PERIOD_MS);
 }
