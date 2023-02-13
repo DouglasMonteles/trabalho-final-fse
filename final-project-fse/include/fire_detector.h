@@ -10,6 +10,6 @@
 void init_fire_detector();
 void config_fire_detector();
 void handle_fire_detector(void * params);
-void mqtt_send_message_to_dashboard_about_flame_detector(int state);
+void mqtt_send_message_to_dashboard_about_flame_detector(int state, int analogic);
 
 #endif

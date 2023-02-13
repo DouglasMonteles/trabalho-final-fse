@@ -6,6 +6,7 @@
 
 #include "fire_detector.h"
 #include "mqtt.h"
+#include "flash_memory_nvs.h" 
 
 int analogic_output;
 int digital_output;
@@ -13,7 +14,12 @@ int digital_output;
 void init_fire_detector() {
   config_fire_detector();
   xTaskCreate(&handle_fire_detector, "Detector de chama", 2048, NULL, 1, NULL);
-  mqtt_send_message_to_dashboard_about_flame_detector(0);
+  
+  int32_t fire_state = le_valor_nvs(NVS_FIRE_STATE_KEY);
+  int32_t analogic_state = le_valor_nvs(NVS_ANALOGIC_KEY);
+
+  mqtt_send_message_to_dashboard_about_flame_detector(fire_state, analogic_state);
+  
   vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 
@@ -39,19 +45,22 @@ void handle_fire_detector(void* params) {
 
     if (digital_output != 0) {
       ESP_LOGI("Modulo detector de fogo", "Fogo detectado!!!");
-      mqtt_send_message_to_dashboard_about_flame_detector(digital_output);
+      mqtt_send_message_to_dashboard_about_flame_detector(digital_output, analogic_output);
 
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     } else {
       analogic_output = 0;
-      mqtt_send_message_to_dashboard_about_flame_detector(digital_output);
+      mqtt_send_message_to_dashboard_about_flame_detector(digital_output, analogic_output);
     }
+
+    grava_valor_nvs(NVS_ANALOGIC_KEY, analogic_output);
+    grava_valor_nvs(NVS_FIRE_STATE_KEY, digital_output);
     
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
-void mqtt_send_message_to_dashboard_about_flame_detector(int is_activated) {
+void mqtt_send_message_to_dashboard_about_flame_detector(int is_activated, int analogic_op) {
   cJSON* attributes_response_body = cJSON_CreateObject();
   cJSON* telemetry_response_body = cJSON_CreateObject();
   
@@ -63,7 +72,7 @@ void mqtt_send_message_to_dashboard_about_flame_detector(int is_activated) {
     ESP_LOGE("Fire detector", "Nao foi possivel criar o telemetry_response_body do detector de fogo!");
   }
 
-  cJSON_AddItemToObject(telemetry_response_body, "fire_detector_state_telemetry", cJSON_CreateNumber(analogic_output));
+  cJSON_AddItemToObject(telemetry_response_body, "fire_detector_state_telemetry", cJSON_CreateNumber(analogic_op));
   mqtt_envia_mensagem("v1/devices/me/telemetry", cJSON_Print(telemetry_response_body));
 
   cJSON_AddItemToObject(attributes_response_body, "fire_detector_state", cJSON_CreateNumber(is_activated));
