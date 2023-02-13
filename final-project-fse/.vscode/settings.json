@@ -3,6 +3,7 @@
     "temperature_sensor.h": "c",
     "stdbool.h": "c",
     "gpio.h": "c",
-    "fire_detector.h": "c"
+    "fire_detector.h": "c",
+    "dht11.h": "c"
   }
 }

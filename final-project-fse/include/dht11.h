@@ -27,7 +27,7 @@
 
 #include "driver/gpio.h"
 
-#define GPIO_DHT11 15
+#define GPIO_DHT11 5
 
 enum dht11_status {
   DHT11_CRC_ERROR = -2,
@@ -44,6 +44,7 @@ struct dht11_reading {
 void dht11_init();
 void DHT11_init(gpio_num_t);
 void handle_dht11(void* params);
+void mqtt_send_message_to_dashboard_about_dht11_sensor(int temperature, int humidity);
 
 struct dht11_reading DHT11_read();
 

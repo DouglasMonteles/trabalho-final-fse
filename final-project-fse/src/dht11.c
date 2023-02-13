@@ -28,7 +28,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "cJSON.h"
 
+#include "mqtt.h"
 #include "dht11.h"
 
 static gpio_num_t dht_gpio;
@@ -141,8 +143,23 @@ void handle_dht11(void* params) {
         
 		if (status == DHT11_OK) {
 			ESP_LOGI("Sensor DHT11", "Temperatura: %d - Umidade: %d", temperature, humidity);
-		}
+            mqtt_send_message_to_dashboard_about_dht11_sensor(temperature, humidity);
+        }
 		
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
+}
+
+void mqtt_send_message_to_dashboard_about_dht11_sensor(int temperature, int humidity) {
+  cJSON* telemetry_response_body = cJSON_CreateObject();
+  
+  if (telemetry_response_body == NULL) {
+    ESP_LOGE("Fire detector", "Nao foi possivel criar o telemetry_response_body do detector de fogo!");
+  }
+
+  cJSON_AddItemToObject(telemetry_response_body, "temperature", cJSON_CreateNumber(temperature));
+  cJSON_AddItemToObject(telemetry_response_body, "humidity", cJSON_CreateNumber(humidity));
+  mqtt_envia_mensagem("v1/devices/me/telemetry", cJSON_Print(telemetry_response_body));
+
+  vTaskDelay(3000 / portTICK_PERIOD_MS);
 }

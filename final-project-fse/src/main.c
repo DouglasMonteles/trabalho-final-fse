@@ -12,6 +12,7 @@
 #include "main.h"
 #include "wifi.h"
 #include "mqtt.h"
+#include "dht11.h"
 #include "fire_detector.h"
 #include "temperature_sensor.h"
 
@@ -56,6 +57,7 @@ void app_main(void) {
       mqtt_send_low_power_mode(false);
 
       init_fire_detector();
+      dht11_init();
       //xTaskCreate(&handle_temperature_sensor_server_connection, "Comunicação com Broker - Fire Detector", 4096, NULL, 1, NULL);
     } else if(LOW_POWER_MODE == LOW_POWER) {
       mqtt_send_low_power_mode(true);
