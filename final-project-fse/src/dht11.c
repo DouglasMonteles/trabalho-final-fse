@@ -32,6 +32,7 @@
 
 #include "mqtt.h"
 #include "dht11.h"
+#include "flash_memory_nvs.h"
 
 static gpio_num_t dht_gpio;
 static int64_t last_read_time = -2000000;
@@ -130,6 +131,12 @@ struct dht11_reading DHT11_read() {
 
 void dht11_init() {
     DHT11_init(GPIO_DHT11);
+
+    int32_t temperature = le_valor_nvs(NVS_TEMPERATURE_KEY);
+    int32_t humidity = le_valor_nvs(NVS_HUMIDITY_KEY);
+
+    mqtt_send_message_to_dashboard_about_dht11_sensor(temperature, humidity);
+
     xTaskCreate(&handle_dht11, "Sensor DHT11", 4096, NULL, 1, NULL);
 }
 
@@ -145,6 +152,9 @@ void handle_dht11(void* params) {
 			ESP_LOGI("Sensor DHT11", "Temperatura: %d - Umidade: %d", temperature, humidity);
             mqtt_send_message_to_dashboard_about_dht11_sensor(temperature, humidity);
         }
+
+        grava_valor_nvs(NVS_TEMPERATURE_KEY, temperature);
+        grava_valor_nvs(NVS_HUMIDITY_KEY, humidity);
 		
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
@@ -159,6 +169,7 @@ void mqtt_send_message_to_dashboard_about_dht11_sensor(int temperature, int humi
 
   cJSON_AddItemToObject(telemetry_response_body, "temperature", cJSON_CreateNumber(temperature));
   cJSON_AddItemToObject(telemetry_response_body, "humidity", cJSON_CreateNumber(humidity));
+  
   mqtt_envia_mensagem("v1/devices/me/telemetry", cJSON_Print(telemetry_response_body));
 
   vTaskDelay(3000 / portTICK_PERIOD_MS);
