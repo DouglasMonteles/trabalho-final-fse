@@ -30,8 +30,8 @@
 #include "esp_log.h"
 #include "cJSON.h"
 
-#include "mqtt.h"
 #include "dht11.h"
+#include "mqtt.h"
 #include "flash_memory_nvs.h"
 
 static gpio_num_t dht_gpio;
@@ -137,7 +137,7 @@ void dht11_init() {
 
     mqtt_send_message_to_dashboard_about_dht11_sensor(temperature, humidity);
 
-    xTaskCreate(&handle_dht11, "Sensor DHT11", 4096, NULL, 1, NULL);
+    xTaskCreate(&handle_dht11, DTH11_TAG, 4096, NULL, 1, NULL);
 }
 
 void handle_dht11(void* params) {
@@ -146,10 +146,9 @@ void handle_dht11(void* params) {
 		int humidity = DHT11_read().humidity;
 		int status = DHT11_read().status;
 
-        ESP_LOGI("Sensor DHT11", "Temperatura: %d - Umidade: %d", temperature, humidity);
         
 		if (status == DHT11_OK) {
-			ESP_LOGI("Sensor DHT11", "Temperatura: %d - Umidade: %d", temperature, humidity);
+            ESP_LOGI(DTH11_TAG, "Temperatura: %d - Umidade: %d", temperature, humidity);
             mqtt_send_message_to_dashboard_about_dht11_sensor(temperature, humidity);
         }
 
@@ -164,7 +163,7 @@ void mqtt_send_message_to_dashboard_about_dht11_sensor(int temperature, int humi
   cJSON* telemetry_response_body = cJSON_CreateObject();
   
   if (telemetry_response_body == NULL) {
-    ESP_LOGE("Fire detector", "Nao foi possivel criar o telemetry_response_body do detector de fogo!");
+    ESP_LOGE(DTH11_TAG, "Nao foi possivel criar o telemetry_response_body do detector de fogo!");
   }
 
   cJSON_AddItemToObject(telemetry_response_body, "temperature", cJSON_CreateNumber(temperature));

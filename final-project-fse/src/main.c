@@ -14,7 +14,6 @@
 #include "mqtt.h"
 #include "dht11.h"
 #include "fire_detector.h"
-#include "temperature_sensor.h"
 
 SemaphoreHandle_t conexaoWifiSemaphore;
 SemaphoreHandle_t conexaoMQTTSemaphore;
