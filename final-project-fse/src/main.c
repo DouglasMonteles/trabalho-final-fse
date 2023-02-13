@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include "nvs_flash.h"
+#include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "freertos/semphr.h"
+#include "cJSON.h"
 
+#include "main.h"
 #include "wifi.h"
 #include "mqtt.h"
 #include "fire_detector.h"
@@ -20,15 +23,6 @@ void conectadoWifi(void * params) {
     if (xSemaphoreTake(conexaoWifiSemaphore, portMAX_DELAY)) {
       // Processamento Internet
       mqtt_start();
-    }
-  }
-}
-
-void handle_fire_detector_server_connection(void * params) {
-  if(xSemaphoreTake(conexaoMQTTSemaphore, portMAX_DELAY)) {
-    while(true) {
-      init_fire_detector();
-      vTaskDelay(3000 / portTICK_PERIOD_MS);
     }
   }
 }
@@ -55,7 +49,32 @@ void app_main(void) {
   conexaoMQTTSemaphore = xSemaphoreCreateBinary();
   wifi_start();
 
-  xTaskCreate(&conectadoWifi,  "Conexão ao MQTT", 4096, NULL, 1, NULL);
-  xTaskCreate(&handle_fire_detector_server_connection, "Comunicação com Broker - Fire Detector", 4096, NULL, 1, NULL);
-  //xTaskCreate(&handle_temperature_sensor_server_connection, "Comunicação com Broker - Fire Detector", 4096, NULL, 1, NULL);
+  xTaskCreate(&conectadoWifi,  "Iniciar conexão ao MQTT via WI-FI", 4096, NULL, 1, NULL);
+  
+  if (xSemaphoreTake(conexaoMQTTSemaphore, portMAX_DELAY)) {
+    if (LOW_POWER_MODE == 0) {
+      mqtt_send_low_power_mode(false);
+
+      init_fire_detector();
+      //xTaskCreate(&handle_temperature_sensor_server_connection, "Comunicação com Broker - Fire Detector", 4096, NULL, 1, NULL);
+    } else if(LOW_POWER_MODE == LOW_POWER) {
+      mqtt_send_low_power_mode(true);
+      // handle_low_power();       
+    }
+  }
+}
+
+void mqtt_send_low_power_mode(int is_low_power_enabled) {
+  ESP_LOGW("LOW POWER", "Enviando estado %s do sistema", (is_low_power_enabled) ? "LOWER POWER" : "NORMAL");
+  
+  cJSON* response = cJSON_CreateObject();
+  
+  if (response == NULL){
+    ESP_LOGE("LOW POWER", "Erro ao criar o json");
+  }
+
+  cJSON_AddItemToObject(response, "is_low_power_enabled", cJSON_CreateNumber(is_low_power_enabled));
+
+  mqtt_envia_mensagem("v1/devices/me/attributes", cJSON_Print(response));
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 }

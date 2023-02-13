@@ -318,6 +318,8 @@ CONFIG_ESP_MAXIMUM_RETRY=5
 #
 # end of Outros
 
+CONFIG_LOW_POWER_MODE=0
+
 #
 # Compiler options
 #

@@ -26,3 +26,10 @@ menu "Outros"
         help
             Senha do WiFi (WPA or WPA2).
 endmenu
+
+config LOW_POWER_MODE
+    int "Modo de Bateria"
+    default 0
+    range 0 1
+    help
+        O modo que a ESP vai operar (0 - Baixo consumo de energia / 1 - Conectada na tomada)
