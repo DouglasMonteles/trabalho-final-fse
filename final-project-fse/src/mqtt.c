@@ -20,6 +20,14 @@
 
 #include "mqtt.h"
 #include "led.h"
+#include "cJSON.h"
+#include "led_rgb.h"
+
+char activeR = 'f';
+char activeG = 'f';
+char activeB = 'f';
+char activeMax = 'f';
+char activeMin = 'f';
 
 extern SemaphoreHandle_t conexaoMQTTSemaphore;
 esp_mqtt_client_handle_t client;
@@ -62,6 +70,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         printf("DATA=%.*s\r\n", event->data_len, event->data);
 
         handle_led_event(event->data);
+        handle_rgb_data(event->data);
         break;
     case MQTT_EVENT_ERROR:
         ESP_LOGI(MQTT_TAG, "MQTT_EVENT_ERROR");
@@ -92,4 +101,54 @@ void mqtt_start() {
 void mqtt_envia_mensagem(char * topico, char * mensagem) {
     int message_id = esp_mqtt_client_publish(client, topico, mensagem, 0, 1, 0);
     ESP_LOGI(MQTT_TAG, "Mensagem enviada, ID: %d", message_id);
+}
+
+void handle_rgb_data(char *data){
+    cJSON* json = cJSON_Parse(data);
+
+    if (json == NULL) {
+        printf("Error parsing JSON: %s\n", cJSON_GetErrorPtr());
+        return;
+    }
+
+    cJSON* params = cJSON_GetObjectItem(json, "params");
+
+    cJSON* valueMax = cJSON_GetObjectItem(params, "ledmax");
+    cJSON* valueMin = cJSON_GetObjectItem(params, "ledmin");
+    cJSON* desmarcarLeds = cJSON_GetObjectItem(params, "desmarcarleds");
+    cJSON* valueR = cJSON_GetObjectItem(params, "ledr");
+    cJSON* valueG = cJSON_GetObjectItem(params, "ledg");
+    cJSON* valueB = cJSON_GetObjectItem(params, "ledb");
+
+    if(cJSON_IsTrue(valueMax)){
+        activeMax = 't';
+    }
+    else {
+        activeMax = 'f';
+    }
+
+    if(cJSON_IsTrue(valueMin)){
+        activeMin = 't';
+    }
+    else {
+        activeMin = 'f';
+    }
+
+    if(cJSON_IsTrue(desmarcarLeds)){
+        activeR = 'f';
+        activeG = 'f';
+        activeB = 'f';
+    }
+
+    if(cJSON_IsTrue(valueR)){
+        activeR = 't';
+    }
+    if(cJSON_IsTrue(valueG)){
+        activeG = 't';
+    }
+    if(cJSON_IsTrue(valueB)){
+        activeB = 't';
+    }
+
+    cJSON_Delete(json);
 }
