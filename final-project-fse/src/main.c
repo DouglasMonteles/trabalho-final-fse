@@ -14,6 +14,7 @@
 #include "mqtt.h"
 #include "dht11.h"
 #include "fire_detector.h"
+#include "low_power.h"
 
 SemaphoreHandle_t conexaoWifiSemaphore;
 SemaphoreHandle_t conexaoMQTTSemaphore;
@@ -25,15 +26,6 @@ void conectadoWifi(void * params) {
       mqtt_start();
     }
   }
-}
-
-void handle_temperature_sensor_server_connection(void * params) {
-  ESP_LOGI("SENSOR DE TEMPERATURA", "Iniciado...");
-    while(true) {
-      //init_temperature_sensor();
-      vTaskDelay(3000 / portTICK_PERIOD_MS);
-    }
-  
 }
 
 void app_main(void) {
@@ -57,10 +49,9 @@ void app_main(void) {
 
       init_fire_detector();
       dht11_init();
-      //xTaskCreate(&handle_temperature_sensor_server_connection, "Comunicação com Broker - Fire Detector", 4096, NULL, 1, NULL);
     } else if(LOW_POWER_MODE == LOW_POWER) {
       mqtt_send_low_power_mode(true);
-      // handle_low_power();       
+      handle_low_power_mode();     
     }
   }
 }

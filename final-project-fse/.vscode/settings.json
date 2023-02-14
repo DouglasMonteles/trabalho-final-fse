@@ -5,6 +5,7 @@
     "gpio.h": "c",
     "fire_detector.h": "c",
     "dht11.h": "c",
-    "led.h": "c"
+    "led.h": "c",
+    "low_power.h": "c"
   }
 }
