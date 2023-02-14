@@ -16,6 +16,10 @@
 #include "fire_detector.h"
 #include "low_power.h"
 
+#include "led.h"
+#include "rotaty.h"
+#include "led_rgb.h"
+
 SemaphoreHandle_t conexaoWifiSemaphore;
 SemaphoreHandle_t conexaoMQTTSemaphore;
 
@@ -29,6 +33,7 @@ void conectadoWifi(void * params) {
 }
 
 void app_main(void) {
+  inicia_valores();
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -49,6 +54,11 @@ void app_main(void) {
 
       init_fire_detector();
       dht11_init();
+
+      xTaskCreate(control_rotary_decoder, "Controle do Rotary", 4096, NULL, 1, NULL);
+      xTaskCreate(pwm_r, "Controle LED Vermelho", 4096, NULL, 1, NULL);
+      xTaskCreate(pwm_g, "Controle LED Verde", 4096, NULL, 1, NULL);
+      xTaskCreate(pwm_b, "Controle LED Azul", 4096, NULL, 1, NULL);
     } else if(LOW_POWER_MODE == LOW_POWER) {
       mqtt_send_low_power_mode(true);
       handle_low_power_mode();     

@@ -7,6 +7,7 @@
 #include "fire_detector.h"
 #include "mqtt.h"
 #include "flash_memory_nvs.h" 
+#include "rotaty.h"
 
 int analogic_output;
 int digital_output;
@@ -37,9 +38,19 @@ void handle_fire_detector(void* params) {
   analogic_output = 0;
   digital_output = 0;
 
+  char mensagem[50];
   while (true) {
     analogic_output = adc1_get_raw(ANALOGIC_CHANEL);
     digital_output = gpio_get_level(GPIO_DIGITAL_OUTPUT);
+
+    sprintf(mensagem, "{\"potencia_vermelho\": %d}", rotary_r);
+    mqtt_envia_mensagem("v1/devices/me/attributes", mensagem);
+
+    sprintf(mensagem, "{\"potencia_verde\": %d}", rotary_g);
+    mqtt_envia_mensagem("v1/devices/me/attributes", mensagem);
+
+    sprintf(mensagem, "{\"potencia_azul\": %d}", rotary_b);
+    mqtt_envia_mensagem("v1/devices/me/attributes", mensagem);
 
     ESP_LOGI(FIRE_DETECTOR_TAG, "Saida analogica: %d - Saida digital: %d", analogic_output, digital_output);
 
