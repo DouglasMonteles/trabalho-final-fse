@@ -17,7 +17,7 @@
 
 ```bash
 # Clone o projeto
-git clone https://github.com/DouglasMonteles/trabalho-final-fse
+git clone https://github.com/DouglasMonteles/trabalho-final-fse.git
 
 # Entre no diretório
 cd trabalho-final-fse/final-project-fse
