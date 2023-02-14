@@ -1,4 +1,4 @@
-#include "rotary.h"
+#include "rotaty.h"
 #include "mqtt.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -7,8 +7,8 @@
 #include "nvs_flash.h"
 #include "esp_log.h"
 
-#define ROTARY_PIN_A 2
-#define ROTARY_PIN_B 4
+#define ROTARY_PIN_A 22
+#define ROTARY_PIN_B 23
 
 int counter = 0;
 
